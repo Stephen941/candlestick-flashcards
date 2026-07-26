@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Candlestick Pattern Flashcards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10161d;
+    --surface:#1a222b;
+    --surface-2:#212b35;
+    --line:#2a3542;
+    --ink:#e9eef3;
+    --muted:#8695a7;
+    --bull:#2dd4b4;
+    --bull-dim:#1d5f56;
+    --bear:#f0645f;
+    --bear-dim:#6b2f2e;
+    --neutral:#d9a441;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:radial-gradient(1200px 600px at 50% -10%, #17202a 0%, var(--bg) 60%);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+    padding:26px 16px 40px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.16em;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(20px,5vw,28px);
+    margin:4px 0 16px;
+    letter-spacing:-0.01em;
+    text-align:center;
+  }
+
+  .controls{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .filter-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    justify-content:center;
+  }
+  .filter-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.03em;
+    padding:7px 12px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--muted);
+    cursor:pointer;
+    transition:all .15s ease;
+    white-space:nowrap;
+  }
+  .filter-btn.on[data-c="br"], .filter-btn.on[data-c="bc"]{color:var(--bull);border-color:var(--bull-dim);background:#132a26;}
+  .filter-btn.on[data-c="er"], .filter-btn.on[data-c="ec"]{color:var(--bear);border-color:var(--bear-dim);background:#2a1615;}
+
+  .action-row{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+  }
+  .action-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    padding:8px 16px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-2);
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .action-btn:active{transform:scale(0.97);}
+
+  .stage{
+    width:100%;
+    max-width:380px;
+    perspective:1400px;
+  }
+  .card{
+    position:relative;
+    width:100%;
+    aspect-ratio:3/4;
+    cursor:pointer;
+    transform-style:preserve-3d;
+    transition:transform .55s cubic-bezier(.2,.8,.2,1);
+  }
+  .card.flipped{transform:rotateY(180deg);}
+  .face{
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,var(--surface) 0%, #161e26 100%);
+    display:flex;
+    flex-direction:column;
+    padding:16px;
+    box-shadow:0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+  .face.back{transform:rotateY(180deg);}
+
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    letter-spacing:0.06em;
+    gap:8px;
+  }
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:0.05em;
+    padding:3px 8px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .tag.br, .tag.bc{color:var(--bull);background:#122c27;border:1px solid var(--bull-dim);}
+  .tag.er, .tag.ec{color:var(--bear);background:#2c1615;border:1px solid var(--bear-dim);}
+
+  .trend-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    color:#5f6f81;
+    letter-spacing:0.04em;
+    margin-top:8px;
+  }
+
+  .chart{
+    position:relative;
+    flex:1;
+    margin:6px 0 10px;
+    border-radius:10px;
+    background:
+      repeating-linear-gradient(180deg, transparent 0, transparent 24px, var(--line) 24px, var(--line) 25px),
+      #131a21;
+    overflow:hidden;
+  }
+  .lead-zone{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:20%;
+    border-right:1px dashed #2c3946;
+  }
+  .lead-dot{
+    position:absolute;
+    width:5px;height:5px;
+    border-radius:50%;
+    background:#6b7a8c;
+    transform:translate(-50%,-50%);
+  }
+  .lead-line{
+    position:absolute;
+    height:1px;
+    background:#4a5666;
+    transform-origin:left center;
+  }
+  .pattern-zone{
+    position:absolute;
+    left:22%;
+    right:0; top:0; bottom:0;
+  }
+  .candle{
+    position:absolute;
+    bottom:0;
+    width:14%;
+    height:100%;
+  }
+  .wick{
+    position:absolute;
+    left:50%;
+    width:2px;
+    transform:translateX(-50%);
+    background:var(--muted);
+    opacity:0.85;
+  }
+  .body{
+    position:absolute;
+    left:50%;
+    width:68%;
+    transform:translateX(-50%);
+    border-radius:2px;
+  }
+  .body.bull{background:var(--bull);}
+  .body.bear{background:var(--bear);}
+  .body.neutral{background:var(--neutral);}
+
+  .name{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:18px;
+    margin:0 0 2px;
+    line-height:1.15;
+  }
+  .hint{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:0.05em;
+  }
+  .desc{
+    font-size:13.5px;
+    line-height:1.5;
+    color:#dbe3ea;
+    margin-top:6px;
+    overflow-y:auto;
+  }
+  .face.back .name{font-size:16px;}
+
+  .nav{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-top:20px;
+  }
+  .nav button{
+    width:42px;height:42px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:18px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .nav button:active{transform:scale(0.94);}
+  .counter{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    min-width:64px;
+    text-align:center;
+  }
+  .empty-msg{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    padding:40px 20px;
+  }
+  .footer-hint{
+    margin-top:20px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:#556374;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+  <div class="eyebrow">Price Action / Flashcards</div>
+  <h1>Candlestick Patterns</h1>
+
+  <div class="controls">
+    <div class="filter-row" id="filterRow">
+      <button class="filter-btn on" data-c="br">Bullish Reversal</button>
+      <button class="filter-btn on" data-c="bc">Bullish Continuation</button>
+      <button class="filter-btn on" data-c="er">Bearish Reversal</button>
+      <button class="filter-btn on" data-c="ec">Bearish Continuation</button>
+    </div>
+    <div class="action-row">
+      <button class="action-btn" id="allBtn">Select All</button>
+      <button class="action-btn" id="noneBtn">Clear</button>
+      <button class="action-btn" id="shuffleBtn">🔀 Shuffle</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="card-top">
+          <span id="frontIndex">01</span>
+          <span class="tag" id="frontTag">BULL · REV</span>
+        </div>
+        <div class="trend-label" id="frontTrend">PRIOR TREND: DOWN</div>
+        <div class="chart" id="chartFront"></div>
+        <div class="name" id="frontName">Hammer</div>
+        <div class="hint">tap to see meaning</div>
+      </div>
+      <div class="face back">
+        <div class="card-top">
+          <span id="backIndex">01</span>
+          <span class="tag" id="backTag">BULL · REV</span>
+        </div>
+        <div class="name" id="backName">Hammer</div>
+        <div class="desc" id="backDesc">...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button id="prevBtn" aria-label="Previous">←</button>
+    <div class="counter" id="counter">1 / 72</div>
+    <button id="nextBtn" aria-label="Next">→</button>
+  </div>
+  <div class="footer-hint">tap card to flip · ← → to move · toggle categories above</div>
+
+<script>
+/* ---------- category metadata ---------- */
+const CATS = {
+  br:{label:'Bullish Reversal', short:'BULL · REV', trend:'down'},
+  bc:{label:'Bullish Continuation', short:'BULL · CONT', trend:'up'},
+  er:{label:'Bearish Reversal', short:'BEAR · REV', trend:'up'},
+  ec:{label:'Bearish Continuation', short:'BEAR · CONT', trend:'down'},
+};
+
+/* ---------- helpers ---------- */
+function P(name, cat, desc, candles){ return {name, cat, desc, candles}; }
+
+// mirrors a pattern vertically (top<->bottom) and swaps bull/bear coloring,
+// used for reversal/continuation pairs that are structurally identical mirror images
+function M(p, cat, name, desc){
+  return P(name || p.name, cat, desc || p.desc, p.candles.map(c => ({
+    wT: 100 - c.wB, wB: 100 - c.wT,
+    bT: 100 - c.bB, bB: 100 - c.bT,
+    c: c.c === 'bull' ? 'bear' : (c.c === 'bear' ? 'bull' : 'neutral')
+  })));
+}
+
+/* ================= BULLISH REVERSAL (base set) ================= */
+const longWhiteBody = P("Long White Body","br","A single candle with a large green body and short wicks, showing buyers were in control from open to close with little resistance.",
+  [{wT:18,wB:82,bT:20,bB:80,c:'bull'}]);
+
+const hammer = P("Hammer","br","Forms after a decline. A small body sits near the top of the range with a long lower wick, showing sellers pushed price down but buyers drove it back up before the close.",
+  [{wT:15,wB:90,bT:15,bB:32,c:'bull'}]);
+
+const invHammer = P("Inverted Hammer","br","Appears after a downtrend. Small body near the bottom with a long upper wick — buyers tried to push higher and were pushed back, but the attempt hints demand is returning.",
+  [{wT:10,wB:88,bT:70,bB:85,c:'bull'}]);
+
+const beltHoldBull = P("Belt Hold (Bullish)","br","Opens at the low of the session and climbs steadily to close near the high, leaving little to no lower wick — a strong one-candle statement that buyers took control immediately.",
+  [{wT:18,wB:85,bT:20,bB:85,c:'bull'}]);
+
+const engulfBull = P("Engulfing Pattern (Bullish)","br","A small red candle is followed by a larger green candle whose body fully covers the prior one, signaling buyers overwhelming the previous selling pressure.",
+  [{wT:30,wB:60,bT:35,bB:55,c:'bear'},{wT:15,wB:80,bT:20,bB:75,c:'bull'}]);
+
+const haramiBull = P("Harami (Bullish)","br","A long red candle is followed by a small green candle whose body sits entirely inside the prior one, suggesting the downward momentum is stalling.",
+  [{wT:10,wB:80,bT:15,bB:75,c:'bear'},{wT:38,wB:58,bT:40,bB:55,c:'bull'}]);
+
+const haramiCrossBull = P("Harami Cross (Bullish)","br","Like a bullish harami, but the second candle is a doji — an even stronger sign of indecision breaking a prior downtrend's momentum.",
+  [{wT:10,wB:80,bT:15,bB:75,c:'bear'},{wT:30,wB:65,bT:46,bB:49,c:'neutral'}]);
+
+const piercing = P("Piercing Line","br","A long red candle is followed by a green candle that opens below the prior low but closes above its midpoint, showing a strong intraday reversal in buyers' favor.",
+  [{wT:15,wB:75,bT:20,bB:70,c:'bear'},{wT:35,wB:90,bT:40,bB:85,c:'bull'}]);
+
+const dojiStarBull = P("Doji Star (Bullish)","br","A long red candle is followed by a doji that gaps lower, showing selling momentum has stalled completely and the market is undecided at a lower level.",
+  [{wT:10,wB:70,bT:15,bB:65,c:'bear'},{wT:78,wB:92,bT:83,bB:86,c:'neutral'}]);
+
+const meetingLinesBull = P("Meeting Lines (Bullish)","br","A long red candle is followed by a long green candle that closes at almost the same price, showing sellers and buyers 'meeting' at a level and momentum reversing.",
+  [{wT:10,wB:65,bT:15,bB:60,c:'bear'},{wT:60,wB:95,bT:63,bB:92,c:'bull'}]);
+
+const threeWhiteSoldiers = P("Three White Soldiers","br","Three consecutive green candles, each opening within the previous body and closing higher than the last — steady, sustained buying pressure over several sessions.",
+  [{wT:55,wB:88,bT:60,bB:85,c:'bull'},{wT:35,wB:72,bT:40,bB:68,c:'bull'},{wT:15,wB:52,bT:20,bB:48,c:'bull'}]);
+
+const morningStar = P("Morning Star","br","A long red candle, then a small-bodied candle that gaps lower, then a long green candle closing well into the first candle's body — a classic three-candle turning point.",
+  [{wT:10,wB:65,bT:15,bB:60,c:'bear'},{wT:60,wB:80,bT:68,bB:72,c:'neutral'},{wT:15,wB:70,bT:20,bB:65,c:'bull'}]);
+
+const morningDojiStar = P("Morning Doji Star","br","A variant of the Morning Star where the middle candle is a doji instead of a small body, showing an even sharper moment of indecision before buyers take over.",
+  [{wT:10,wB:65,bT:15,bB:60,c:'bear'},{wT:65,wB:80,bT:71,bB:74,c:'neutral'},{wT:15,wB:70,bT:20,bB:65,c:'bull'}]);
+
+const abandonedBabyBull = P("Abandoned Baby (Bullish)","br","A rare, powerful reversal: a long red candle, then a doji that gaps away from it with a visible price gap on both sides, then a green candle gapping back up — the doji looks 'abandoned' in space.",
+  [{wT:10,wB:60,bT:15,bB:55,c:'bear'},{wT:75,wB:88,bT:80,bB:83,c:'neutral'},{wT:15,wB:65,bT:20,bB:60,c:'bull'}]);
+
+const triStarBull = P("Tri-Star (Bullish)","br","Three consecutive doji candles, with the middle one gapping below the other two, marking an extreme and rare moment of indecision at the bottom of a decline.",
+  [{wT:40,wB:55,bT:46,bB:49,c:'neutral'},{wT:70,wB:85,bT:76,bB:79,c:'neutral'},{wT:35,wB:50,bT:41,bB:44,c:'neutral'}]);
+
+const breakawayBull = P("Breakaway (Bullish)","br","A five-candle pattern: a long red candle, three smaller candles continuing lower in steps, then a long green candle that closes back inside the first candle's body — a slow reversal.",
+  [{wT:10,wB:40,bT:15,bB:35,c:'bear'},{wT:38,wB:60,bT:42,bB:57,c:'bear'},{wT:55,wB:75,bT:58,bB:72,c:'bear'},{wT:68,wB:88,bT:70,bB:85,c:'bear'},{wT:20,wB:90,bT:25,bB:85,c:'bull'}]);
+
+const threeInsideUp = P("Three Inside Up","br","A Bullish Harami followed by a third green candle that closes above the second candle's high, confirming the reversal signaled by the harami.",
+  [{wT:10,wB:80,bT:15,bB:75,c:'bear'},{wT:38,wB:58,bT:40,bB:55,c:'bull'},{wT:20,wB:52,bT:22,bB:48,c:'bull'}]);
+
+const threeOutsideUp = P("Three Outside Up","br","A Bullish Engulfing pattern followed by a third green candle that closes even higher, confirming buyers have firmly taken control.",
+  [{wT:30,wB:60,bT:35,bB:55,c:'bear'},{wT:15,wB:80,bT:20,bB:75,c:'bull'},{wT:8,wB:72,bT:10,bB:68,c:'bull'}]);
+
+const kickingBull = P("Kicking (Bullish)","br","A bearish marubozu is immediately followed by a bullish marubozu that gaps up with no overlap in price range at all — an abrupt, forceful reversal in sentiment.",
+  [{wT:40,wB:42,bT:42,bB:90,c:'bear'},{wT:8,wB:10,bT:10,bB:38,c:'bull'}]);
+
+const uniqueThreeRivers = P("Unique Three Rivers Bottom","br","A long red candle, then a smaller red candle with a lower low forming a hammer-like shape inside the first's range, then a small green candle — a gradual bottoming process.",
+  [{wT:10,wB:70,bT:15,bB:65,c:'bear'},{wT:60,wB:95,bT:60,bB:80,c:'bear'},{wT:55,wB:78,bT:60,bB:74,c:'bull'}]);
+
+const threeStarsSouth = P("Three Stars in the South","br","Three small red candles with progressively shrinking ranges, showing selling pressure steadily running out of steam near a bottom.",
+  [{wT:10,wB:60,bT:15,bB:55,c:'bear'},{wT:35,wB:70,bT:40,bB:63,c:'bear'},{wT:50,wB:72,bT:53,bB:68,c:'bear'}]);
+
+const concealingSwallow = P("Concealing Baby Swallow","br","A rare four-part bottoming pattern: two black marubozu candles followed by a candle that gaps down but whose wick 'conceals' back into the prior range, then a candle that fully engulfs the move — signaling exhaustion of a decline.",
+  [{wT:20,wB:22,bT:22,bB:70,c:'bear'},{wT:65,wB:67,bT:67,bB:92,c:'bear'},{wT:10,wB:95,bT:15,bB:90,c:'bear'}]);
+
+const stickSandwich = P("Stick Sandwich","br","A red candle, then a green candle closing higher, then another red candle closing at nearly the same price as the first — the green candle is 'sandwiched' between two matching closes.",
+  [{wT:10,wB:55,bT:15,bB:50,c:'bear'},{wT:30,wB:75,bT:35,bB:70,c:'bull'},{wT:12,wB:57,bT:17,bB:52,c:'bear'}]);
+
+const homingPigeon = P("Homing Pigeon","br","A long red candle followed by a smaller red candle whose body sits entirely within the first — similar to a bullish harami, but both candles are red, showing softening momentum.",
+  [{wT:10,wB:80,bT:15,bB:75,c:'bear'},{wT:38,wB:58,bT:40,bB:55,c:'bear'}]);
+
+const ladderBottom = P("Ladder Bottom","br","Three declining red candles in a row followed by a green candle that gaps up and closes strongly, marking a sudden bottom after a steady 'ladder' down.",
+  [{wT:10,wB:40,bT:15,bB:35,c:'bear'},{wT:30,wB:58,bT:35,bB:53,c:'bear'},{wT:48,wB:74,bT:52,bB:70,c:'bear'},{wT:60,wB:92,bT:65,bB:88,c:'bull'}]);
+
+const matchingLow = P("Matching Low","br","Two red candles that close at almost exactly the same low price, suggesting a floor of support is forming as sellers fail to push price any lower.",
+  [{wT:10,wB:60,bT:15,bB:55,c:'bear'},{wT:20,wB:60,bT:25,bB:55,c:'bear'}]);
+
+const dragonflyDoji = P("Dragonfly Doji","br","Open and close are essentially equal, forming a flat body near the top with a long lower wick and little to no upper wick — sellers took control intraday but buyers fully reclaimed it by the close.",
+  [{wT:15,wB:95,bT:15,bB:18,c:'neutral'}]);
+
+const marubozuBull = P("Bullish Marubozu","br","A green candle with no wicks at all — price opened at the low and closed at the high, showing buyers were in complete control for the entire session.",
+  [{wT:20,wB:20,bT:20,bB:85,c:'bull'}]);
+
+/* ================= BULLISH CONTINUATION (base set) ================= */
+const separatingLinesBull = P("Separating Lines (Bullish)","bc","A red candle is followed by a green candle that opens at the same price as the red candle's open, then continues the prior uptrend — the two candles 'separate' from a shared open.",
+  [{wT:15,wB:55,bT:18,bB:52,c:'bear'},{wT:10,wB:70,bT:14,bB:65,c:'bull'}]);
+
+const risingThreeMethods = P("Rising Three Methods","bc","A long green candle, three small red pullback candles that stay within its range, then another long green candle breaking to new highs — a healthy pause within an uptrend.",
+  [{wT:8,wB:60,bT:12,bB:55,c:'bull'},{wT:30,wB:45,bT:33,bB:42,c:'bear'},{wT:35,wB:50,bT:38,bB:47,c:'bear'},{wT:38,wB:53,bT:41,bB:50,c:'bear'},{wT:5,wB:50,bT:8,bB:45,c:'bull'}]);
+
+const upsideTasukiGap = P("Upside Tasuki Gap","bc","A green candle, then a second green candle that gaps up, then a red candle that opens inside the second body and closes in the gap without fully filling it — the uptrend's gap remains largely intact.",
+  [{wT:50,wB:80,bT:53,bB:77,c:'bull'},{wT:20,wB:48,bT:23,bB:45,c:'bull'},{wT:30,wB:55,bT:33,bB:52,c:'bear'}]);
+
+const sideBySideWhiteBull = P("Side by Side White Lines (Bullish)","bc","Two green candles of similar size that gap up together in roughly the same direction, showing buyers stepping in twice in a row to keep the uptrend moving.",
+  [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:15,wB:45,bT:18,bB:42,c:'bull'}]);
+
+const threeLineStrikeBull = P("Three-Line Strike (Bullish)","bc","Three rising green candles followed by one long red candle that engulfs all three — an unusual pullback that, in this pattern, is typically followed by the uptrend resuming.",
+  [{wT:60,wB:80,bT:63,bB:77,c:'bull'},{wT:45,wB:65,bT:48,bB:62,c:'bull'},{wT:30,wB:50,bT:33,bB:47,c:'bull'},{wT:75,wB:95,bT:78,bB:92,c:'bear'}]);
+
+const upsideGapThreeMethods = P("Upside Gap Three Methods","bc","Two green candles separated by a gap, followed by a red candle that trades into the gap but doesn't close it — the underlying uptrend remains in control.",
+  [{wT:60,wB:80,bT:63,bB:77,c:'bull'},{wT:30,wB:50,bT:33,bB:47,c:'bull'},{wT:45,wB:70,bT:48,bB:67,c:'bear'}]);
+
+const onNecklineBase = P("On Neckline","ec","A long red candle followed by a smaller green candle that closes right at the prior candle's low, forming a 'neckline' — price often continues lower afterward.",
+  [{wT:10,wB:55,bT:15,bB:50,c:'bear'},{wT:48,wB:65,bT:50,bB:62,c:'bull'}]);
+
+const inNecklineBase = P("In Neckline","ec","Similar to On Neckline, but the second candle closes just slightly inside the prior candle's body rather than exactly at the low — a subtly weaker pause before the downtrend continues.",
+  [{wT:10,wB:55,bT:15,bB:50,c:'bear'},{wT:46,wB:63,bT:48,bB:60,c:'bull'}]);
+
+const risingWindow = P("Rising Window","bc","A clear price gap ('window') between two green candles, with no overlap between them — a strong sign that buyers pushed price up without hesitation.",
+  [{wT:50,wB:80,bT:53,bB:77,c:'bull'},{wT:20,wB:48,bT:23,bB:45,c:'bull'}]);
+
+/* ================= BEARISH REVERSAL (mirrors + unique) ================= */
+const longBlackBody = M(longWhiteBody,"er","Long Black Body","A single candle with a large red body and short wicks, showing sellers were in control from open to close with little resistance.");
+
+const hangingMan = P("Hanging Man","er","Same shape as a hammer — small body near the top with a long lower wick — but appears after an uptrend, an early warning that buying strength may be fading.",
+  [{wT:15,wB:90,bT:15,bB:32,c:'bear'}]);
+
+const shootingStar = P("Shooting Star","er","Appears after a rally. Small body near the bottom of the range with a long upper wick, showing buyers pushed price up but sellers dragged it back down before the close.",
+  [{wT:10,wB:88,bT:70,bB:85,c:'bear'}]);
+
+const beltHoldBear = M(beltHoldBull,"er","Belt Hold (Bearish)","Opens at the high of the session and falls steadily to close near the low, leaving little to no upper wick — a strong one-candle statement that sellers took control immediately.");
+
+const engulfBear = P("Engulfing Pattern (Bearish)","er","A small green candle is followed by a larger red candle whose body fully covers the prior one, signaling sellers overwhelming the previous buying pressure.",
+  [{wT:30,wB:60,bT:35,bB:55,c:'bull'},{wT:15,wB:80,bT:20,bB:75,c:'bear'}]);
+
+const haramiBear = P("Harami (Bearish)","er","A long green candle is followed by a small red candle whose body sits entirely inside the prior one, suggesting the upward momentum is stalling.",
+  [{wT:10,wB:80,bT:15,bB:75,c:'bull'},{wT:38,wB:58,bT:40,bB:55,c:'bear'}]);
+
+const haramiCrossBear = M(haramiCrossBull,"er","Harami Cross (Bearish)","Like a bearish harami, but the second candle is a doji — an even stronger sign of indecision breaking a prior uptrend's momentum.");
+
+const darkCloudCover = P("Dark Cloud Cover","er","A long green candle is followed by a red candle that opens above the prior high but closes below its midpoint, showing a strong intraday reversal in sellers' favor.",
+  [{wT:15,wB:75,bT:20,bB:70,c:'bull'},{wT:10,wB:60,bT:15,bB:55,c:'bear'}]);
+
+const dojiStarBear = M(dojiStarBull,"er","Doji Star (Bearish)","A long green candle is followed by a doji that gaps higher, showing buying momentum has stalled completely and the market is undecided at a higher level.");
+
+const meetingLinesBear = M(meetingLinesBull,"er","Meeting Lines (Bearish)","A long green candle is followed by a long red candle that closes at almost the same price, showing buyers and sellers 'meeting' at a level and momentum reversing.");
+
+const threeBlackCrows = P("Three Black Crows","er","Three consecutive red candles, each opening within the previous body and closing lower than the last — steady, sustained selling pressure over several sessions.",
+  [{wT:10,wB:44,bT:15,bB:40,c:'bear'},{wT:28,wB:64,bT:32,bB:60,c:'bear'},{wT:48,wB:84,bT:52,bB:80,c:'bear'}]);
+
+const eveningStar = P("Evening Star","er","A long green candle, then a small-bodied candle that gaps higher, then a long red candle closing well into the first candle's body — a classic three-candle turning point.",
+  [{wT:20,wB:75,bT:25,bB:70,c:'bull'},{wT:10,wB:25,bT:15,bB:19,c:'neutral'},{wT:20,wB:76,bT:25,bB:72,c:'bear'}]);
+
+const eveningDojiStar = M(morningDojiStar,"er","Evening Doji Star","A variant of the Evening Star where the middle candle is a doji instead of a small body, showing an even sharper moment of indecision before sellers take over.");
+
+const abandonedBabyBear = M(abandonedBabyBull,"er","Abandoned Baby (Bearish)","A rare, powerful reversal: a long green candle, then a doji that gaps away with a visible price gap on both sides, then a red candle gapping back down — the doji looks 'abandoned' in space.");
+
+const triStarBear = M(triStarBull,"er","Tri-Star (Bearish)","Three consecutive doji candles, with the middle one gapping above the other two, marking an extreme and rare moment of indecision at the top of a rally.");
+
+const breakawayBear = M(breakawayBull,"er","Breakaway (Bearish)","A five-candle pattern: a long green candle, three smaller candles continuing higher in steps, then a long red candle that closes back inside the first candle's body — a slow reversal.");
+
+const threeInsideDown = M(threeInsideUp,"er","Three Inside Down","A Bearish Harami followed by a third red candle that closes below the second candle's low, confirming the reversal signaled by the harami.");
+
+const threeOutsideDown = M(threeOutsideUp,"er","Three Outside Down","A Bearish Engulfing pattern followed by a third red candle that closes even lower, confirming sellers have firmly taken control.");
+
+const kickingBear = M(kickingBull,"er","Kicking (Bearish)","A bullish marubozu is immediately followed by a bearish marubozu that gaps down with no overlap in price range at all — an abrupt, forceful reversal in sentiment.");
+
+const ladderTop = M(ladderBottom,"er","Ladder Top","Three rising green candles in a row followed by a red candle that gaps down and closes strongly, marking a sudden top after a steady 'ladder' up.");
+
+const matchingHigh = M(matchingLow,"er","Matching High","Two green candles that close at almost exactly the same high price, suggesting a ceiling of resistance is forming as buyers fail to push price any higher.");
+
+const upsideGapTwoCrows = P("Upside Gap Two Crows","er","A long green candle, then a red candle gapping up above it, then another red candle that closes back within the first candle's body — the gap gets 'covered' by the two crows.",
+  [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:15,wB:30,bT:17,bB:28,c:'bear'},{wT:20,wB:50,bT:23,bB:47,c:'bear'}]);
+
+const deliberation = P("Deliberation","er","Two rising green candles followed by a third green candle with a noticeably small body, showing buyers hesitating right near the top of a rally.",
+  [{wT:50,wB:75,bT:53,bB:72,c:'bull'},{wT:30,wB:53,bT:33,bB:50,c:'bull'},{wT:20,wB:32,bT:22,bB:29,c:'bull'}]);
+
+const advanceBlock = P("Advance Block","er","Three rising green candles, each with a progressively smaller body and longer upper wicks, showing the uptrend is losing steam even as price keeps inching higher.",
+  [{wT:55,wB:78,bT:58,bB:75,c:'bull'},{wT:32,wB:58,bT:36,bB:55,c:'bull'},{wT:15,wB:40,bT:22,bB:38,c:'bull'}]);
+
+const twoCrows = P("Two Crows","er","A long green candle, then a red candle gapping up, then a second red candle closing within the first candle's body — two sessions of selling erase the gap-up.",
+  [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:15,wB:35,bT:17,bB:33,c:'bear'},{wT:20,wB:52,bT:23,bB:48,c:'bear'}]);
+
+const gravestoneDoji = P("Gravestone Doji","er","Open and close are essentially equal, forming a flat body near the bottom with a long upper wick and little to no lower wick — buyers pushed price up intraday but lost all of the ground by the close.",
+  [{wT:10,wB:83,bT:80,bB:83,c:'neutral'}]);
+
+const marubozuBear = M(marubozuBull,"er","Bearish Marubozu","A red candle with no wicks at all — price opened at the high and closed at the low, showing sellers were in complete control for the entire session.");
+
+/* ================= BEARISH CONTINUATION (mirrors + unique) ================= */
+const separatingLinesBear = M(separatingLinesBull,"ec","Separating Lines (Bearish)","A green candle is followed by a red candle that opens at the same price as the green candle's open, then continues the prior downtrend — the two candles 'separate' from a shared open.");
+
+const fallingThreeMethods = M(risingThreeMethods,"ec","Falling Three Methods","A long red candle, three small green pullback candles that stay within its range, then another long red candle breaking to new lows — a healthy pause within a downtrend.");
+
+const downsideTasukiGap = M(upsideTasukiGap,"ec","Downside Tasuki Gap","A red candle, then a second red candle that gaps down, then a green candle that opens inside the second body and closes in the gap without fully filling it — the downtrend's gap remains largely intact.");
+
+const sideBySideWhiteBear = P("Side by Side White Lines (Bearish)","ec","An unusual case where two green candles of similar size gap down together within a broader downtrend — a rare pause pattern that still tends to resolve lower.",
+  [{wT:30,wB:60,bT:33,bB:57,c:'bull'},{wT:55,wB:85,bT:58,bB:82,c:'bull'}]);
+
+const threeLineStrikeBear = M(threeLineStrikeBull,"ec","Three-Line Strike (Bearish)","Three falling red candles followed by one long green candle that engulfs all three — an unusual rally that, in this pattern, is typically followed by the downtrend resuming.");
+
+const downsideGapThreeMethods = M(upsideGapThreeMethods,"ec","Downside Gap Three Methods","Two red candles separated by a gap, followed by a green candle that trades into the gap but doesn't close it — the underlying downtrend remains in control.");
+
+const onNecklineBear = onNecklineBase; // already bearish continuation by nature
+const inNecklineBear = inNecklineBase;
+
+const fallingWindow = M(risingWindow,"ec","Falling Window","A clear price gap ('window') between two red candles, with no overlap between them — a strong sign that sellers pushed price down without hesitation.");
+
+/* ================= assemble on-neckline / in-neckline bullish variants (as listed) ================= */
+const onNecklineBull = M(onNecklineBase,"bc","On Neckline (context-dependent)","The same neckline structure can appear within an uptrend's pause; interpretation always depends on the surrounding trend, which is why context matters more than the shape alone.");
+const inNecklineBull = M(inNecklineBase,"bc","In Neckline (context-dependent)","The same near-the-body close structure can appear within an uptrend's pause; interpretation always depends on the surrounding trend, which is why context matters more than the shape alone.");
+
+/* ================= full deck ================= */
+const PATTERNS = [
+  // Bullish Reversal (25)
+  longWhiteBody, hammer, invHammer, beltHoldBull, engulfBull, haramiBull, haramiCrossBull, piercing,
+  dojiStarBull, meetingLinesBull, threeWhiteSoldiers, morningStar, morningDojiStar, abandonedBabyBull,
+  triStarBull, breakawayBull, threeInsideUp, threeOutsideUp, kickingBull,
+  stickSandwich, homingPigeon, ladderBottom, matchingLow,
+  dragonflyDoji, marubozuBull,
+  // Bullish Continuation (5)
+  separatingLinesBull, risingThreeMethods, upsideTasukiGap, threeLineStrikeBull, risingWindow,
+  // Bearish Reversal (27)
+  longBlackBody, hangingMan, shootingStar, beltHoldBear, engulfBear, haramiBear, haramiCrossBear,
+  darkCloudCover, dojiStarBear, meetingLinesBear, threeBlackCrows, eveningStar, eveningDojiStar,
+  abandonedBabyBear, triStarBear, breakawayBear, threeInsideDown, threeOutsideDown, kickingBear,
+  ladderTop, matchingHigh, upsideGapTwoCrows, deliberation, advanceBlock, twoCrows, gravestoneDoji,
+  marubozuBear,
+  // Bearish Continuation (5)
+  separatingLinesBear, fallingThreeMethods, downsideTasukiGap, threeLineStrikeBear, fallingWindow,
+];
+
+/* ---------- state ---------- */
+let order = PATTERNS.map((_, i) => i);   // current display order (indices into PATTERNS)
+let activeCats = new Set(['br','bc','er','ec']);
+let idx = 0;
+let flipped = false;
+
+const card = document.getElementById('card');
+const chartFront = document.getElementById('chartFront');
+const counter = document.getElementById('counter');
+
+function currentList(){
+  return order.filter(i => activeCats.has(PATTERNS[i].cat));
+}
+
+function drawChart(container, candles, trendDir){
+  container.innerHTML = '';
+
+  // lead-in trend indicator
+  const lead = document.createElement('div');
+  lead.className = 'lead-zone';
+  const positions = trendDir === 'up' ? [85,55,25] : [25,55,85];
+  positions.forEach((topPct, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'lead-dot';
+    dot.style.left = (20 + i*30) + '%';
+    dot.style.top = topPct + '%';
+    lead.appendChild(dot);
+  });
+  for(let i=0;i<positions.length-1;i++){
+    const x1 = 20 + i*30, y1 = positions[i];
+    const x2 = 20 + (i+1)*30, y2 = positions[i+1];
+    const dx = x2-x1, dy=y2-y1;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    const angle = Math.atan2(dy,dx)*180/Math.PI;
+    const seg = document.createElement('div');
+    seg.className = 'lead-line';
+    seg.style.left = x1+'%';
+    seg.style.top = y1+'%';
+    seg.style.width = len+'%';
+    seg.style.transform = `rotate(${angle}deg)`;
+    lead.appendChild(seg);
+  }
+  container.appendChild(lead);
+
+  // pattern candles
+  const zone = document.createElement('div');
+  zone.className = 'pattern-zone';
+  const n = candles.length;
+  candles.forEach((cd, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'candle';
+    const leftPct = ((i+0.5)/n)*100;
+    slot.style.left = `calc(${leftPct}% - 7%)`;
+    slot.style.width = (70/n) + '%';
+
+    const wick = document.createElement('div');
+    wick.className = 'wick';
+    wick.style.top = cd.wT + '%';
+    wick.style.height = (cd.wB - cd.wT) + '%';
+
+    const body = document.createElement('div');
+    body.className = 'body ' + cd.c;
+    body.style.top = cd.bT + '%';
+    body.style.height = Math.max(cd.bB - cd.bT, 2) + '%';
+
+    slot.appendChild(wick);
+    slot.appendChild(body);
+    zone.appendChild(slot);
+  });
+  container.appendChild(zone);
+}
+
+function render(){
+  const list = currentList();
+  const counterEl = document.getElementById('counter');
+
+  if(list.length === 0){
+    document.querySelector('.stage').innerHTML = '<div class="empty-msg">No categories selected.<br>Toggle at least one above.</div>';
+    counterEl.textContent = '0 / 0';
+    return;
+  }
+  if(!document.getElementById('card')){
+    location.reload(); // safety: rebuild stage if it was replaced by empty-msg
+    return;
+  }
+  if(idx >= list.length) idx = 0;
+
+  const realIdx = list[idx];
+  const p = PATTERNS[realIdx];
+  const meta = CATS[p.cat];
+  const posLabel = String(idx+1).padStart(2,'0');
+
+  document.getElementById('frontIndex').textContent = posLabel;
+  document.getElementById('backIndex').textContent = posLabel;
+  document.getElementById('frontName').textContent = p.name;
+  document.getElementById('backName').textContent = p.name;
+  document.getElementById('backDesc').textContent = p.desc;
+  document.getElementById('frontTrend').textContent = 'PRIOR TREND: ' + meta.trend.toUpperCase();
+
+  document.getElementById('frontTag').textContent = meta.short;
+  document.getElementById('frontTag').className = 'tag ' + p.cat;
+  document.getElementById('backTag').textContent = meta.short;
+  document.getElementById('backTag').className = 'tag ' + p.cat;
+
+  drawChart(chartFront, p.candles, meta.trend);
+  counter.textContent = `${idx+1} / ${list.length}`;
+
+  card.classList.remove('flipped');
+  flipped = false;
+}
+
+function ensureStage(){
+  if(!document.getElementById('card')){
+    document.querySelector('.stage').innerHTML = `
+      <div class="card" id="card">
+        <div class="face front">
+          <div class="card-top"><span id="frontIndex">01</span><span class="tag" id="frontTag">BULL · REV</span></div>
+          <div class="trend-label" id="frontTrend">PRIOR TREND: DOWN</div>
+          <div class="chart" id="chartFront"></div>
+          <div class="name" id="frontName">Hammer</div>
+          <div class="hint">tap to see meaning</div>
+        </div>
+        <div class="face back">
+          <div class="card-top"><span id="backIndex">01</span><span class="tag" id="backTag">BULL · REV</span></div>
+          <div class="name" id="backName">Hammer</div>
+          <div class="desc" id="backDesc">...</div>
+        </div>
+      </div>`;
+    attachCardListener();
+  }
+}
+
+function attachCardListener(){
+  document.getElementById('card').addEventListener('click', () => {
+    flipped = !flipped;
+    document.getElementById('card').classList.toggle('flipped', flipped);
+  });
+}
+attachCardListener();
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  ensureStage();
+  const list = currentList();
+  if(list.length === 0) return;
+  idx = (idx - 1 + list.length) % list.length;
+  render();
+});
+document.getElementById('nextBtn').addEventListener('click', () => {
+  ensureStage();
+  const list = currentList();
+  if(list.length === 0) return;
+  idx = (idx + 1) % list.length;
+  render();
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const c = btn.dataset.c;
+    if(activeCats.has(c)){
+      activeCats.delete(c);
+      btn.classList.remove('on');
+    } else {
+      activeCats.add(c);
+      btn.classList.add('on');
+    }
+    idx = 0;
+    ensureStage();
+    render();
+  });
+});
+
+document.getElementById('allBtn').addEventListener('click', () => {
+  activeCats = new Set(['br','bc','er','ec']);
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.add('on'));
+  idx = 0;
+  ensureStage();
+  render();
+});
+document.getElementById('noneBtn').addEventListener('click', () => {
+  activeCats = new Set();
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
+  render();
+});
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+  for(let i = order.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  idx = 0;
+  ensureStage();
+  render();
+});
+
+window.addEventListener('keydown', (e) => {
+  if(e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+  if(e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+  if(e.key === ' ' || e.key === 'Enter'){
+    e.preventDefault();
+    const c = document.getElementById('card');
+    if(c) c.click();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
