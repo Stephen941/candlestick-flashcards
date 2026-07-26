@@ -274,56 +274,221 @@
     color:#556374;
     text-align:center;
   }
+
+  .score-bar{
+    width:100%;
+    max-width:380px;
+    margin-bottom:16px;
+  }
+  .score-stats{
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:6px;
+    letter-spacing:0.02em;
+  }
+  .score-stats .known{color:var(--bull);font-weight:600;}
+  .score-stats .review{color:var(--bear);font-weight:600;}
+  .progress-track{
+    width:100%;
+    height:5px;
+    border-radius:999px;
+    background:var(--surface-2);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--bull),var(--neutral));
+    transition:width .3s ease;
+    width:0%;
+  }
+  .status-badge{
+    font-size:13px;
+    min-width:14px;
+    text-align:center;
+  }
+  .mark-row{
+    display:flex;
+    gap:12px;
+    margin-top:20px;
+    width:100%;
+    max-width:380px;
+  }
+  .mark-btn{
+    flex:1;
+    padding:13px;
+    border-radius:14px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+  }
+  .mark-btn.no{background:#2a1615;color:var(--bear);border:1px solid var(--bear-dim);}
+  .mark-btn.yes{background:#132a26;color:var(--bull);border:1px solid var(--bull-dim);}
+  .mark-btn:active{transform:scale(0.96);}
+  .review-row{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:12px;
+  }
+  .action-btn:disabled{
+    opacity:0.4;
+    cursor:default;
+  }
+  .action-btn.on{
+    background:var(--surface);
+    border-color:#4a5666;
+  }
+
+  #homeView{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:100%;
+  }
+  .home-sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:18px;
+  }
+  .deck-count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:16px;
+  }
+  .start-btn{
+    margin-top:14px;
+    padding:14px 28px;
+    border-radius:14px;
+    border:1px solid var(--bull-dim);
+    background:linear-gradient(180deg,#1d5f56 0%,#164a43 100%);
+    color:var(--bull);
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .start-btn:active{transform:scale(0.97);}
+  .start-btn:disabled{
+    opacity:0.35;
+    cursor:default;
+  }
+
+  .top-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+    max-width:380px;
+    margin-bottom:14px;
+  }
+  .back-link{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:6px 2px;
+  }
+
+  #studyView{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:100%;
+  }
 </style>
 </head>
 <body>
 
-  <div class="eyebrow">Price Action / Flashcards</div>
-  <h1>Candlestick Patterns</h1>
+  <div id="homeView">
+    <div class="eyebrow">Price Action / Flashcards</div>
+    <h1>Candlestick Patterns</h1>
+    <div class="home-sub">Choose which categories to study</div>
 
-  <div class="controls">
-    <div class="filter-row" id="filterRow">
-      <button class="filter-btn on" data-c="br">Bullish Reversal</button>
-      <button class="filter-btn on" data-c="bc">Bullish Continuation</button>
-      <button class="filter-btn on" data-c="er">Bearish Reversal</button>
-      <button class="filter-btn on" data-c="ec">Bearish Continuation</button>
+    <div class="controls">
+      <div class="filter-row" id="filterRow">
+        <button class="filter-btn on" data-c="br">Bullish Reversal</button>
+        <button class="filter-btn on" data-c="bc">Bullish Continuation</button>
+        <button class="filter-btn on" data-c="er">Bearish Reversal</button>
+        <button class="filter-btn on" data-c="ec">Bearish Continuation</button>
+      </div>
+      <div class="action-row">
+        <button class="action-btn" id="allBtn">Select All</button>
+        <button class="action-btn" id="noneBtn">Clear</button>
+      </div>
     </div>
-    <div class="action-row">
-      <button class="action-btn" id="allBtn">Select All</button>
-      <button class="action-btn" id="noneBtn">Clear</button>
+
+    <div class="deck-count" id="deckCount">62 cards selected</div>
+    <button class="start-btn" id="startBtn">Start Studying →</button>
+  </div>
+
+  <div id="studyView" style="display:none;">
+    <div class="top-bar">
+      <button class="back-link" id="backBtn">← Categories</button>
       <button class="action-btn" id="shuffleBtn">🔀 Shuffle</button>
     </div>
-  </div>
 
-  <div class="stage">
-    <div class="card" id="card">
-      <div class="face front">
-        <div class="card-top">
-          <span id="frontIndex">01</span>
-          <span class="tag" id="frontTag">BULL · REV</span>
-        </div>
-        <div class="trend-label" id="frontTrend">PRIOR TREND: DOWN</div>
-        <div class="chart" id="chartFront"></div>
-        <div class="name" id="frontName">Hammer</div>
-        <div class="hint">tap to see meaning</div>
+    <div class="score-bar">
+      <div class="score-stats">
+        <span><span class="known" id="knownCount">0</span> known · <span class="review" id="reviewCount">0</span> to review</span>
+        <span id="remainingCount">0 left</span>
       </div>
-      <div class="face back">
-        <div class="card-top">
-          <span id="backIndex">01</span>
-          <span class="tag" id="backTag">BULL · REV</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="stage">
+      <div class="card" id="card">
+        <div class="face front">
+          <div class="card-top">
+            <span id="frontIndex">01</span>
+            <span class="status-badge" id="frontBadge"></span>
+            <span class="tag" id="frontTag">BULL · REV</span>
+          </div>
+          <div class="trend-label" id="frontTrend">PRIOR TREND: DOWN</div>
+          <div class="chart" id="chartFront"></div>
+          <div class="name" id="frontName">Hammer</div>
+          <div class="hint">tap to see meaning</div>
         </div>
-        <div class="name" id="backName">Hammer</div>
-        <div class="desc" id="backDesc">...</div>
+        <div class="face back">
+          <div class="card-top">
+            <span id="backIndex">01</span>
+            <span class="tag" id="backTag">BULL · REV</span>
+          </div>
+          <div class="name" id="backName">Hammer</div>
+          <div class="desc" id="backDesc">...</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="nav">
-    <button id="prevBtn" aria-label="Previous">←</button>
-    <div class="counter" id="counter">1 / 72</div>
-    <button id="nextBtn" aria-label="Next">→</button>
+    <div class="mark-row">
+      <button class="mark-btn no" id="markNo">✗ Don't Know</button>
+      <button class="mark-btn yes" id="markYes">✓ Know It</button>
+    </div>
+
+    <div class="nav">
+      <button id="prevBtn" aria-label="Previous">←</button>
+      <div class="counter" id="counter">1 / 72</div>
+      <button id="nextBtn" aria-label="Next">→</button>
+    </div>
+
+    <div class="review-row">
+      <button class="action-btn" id="reviewMissedBtn">Review Missed (0)</button>
+      <button class="action-btn" id="resetScoreBtn">Reset Score</button>
+    </div>
+
+    <div class="footer-hint">tap card to flip · ← → to move · mark ✓/✗ to track progress</div>
   </div>
-  <div class="footer-hint">tap card to flip · ← → to move · toggle categories above</div>
 
 <script>
 /* ---------- category metadata ---------- */
@@ -575,13 +740,37 @@ let order = PATTERNS.map((_, i) => i);   // current display order (indices into 
 let activeCats = new Set(['br','bc','er','ec']);
 let idx = 0;
 let flipped = false;
+let scores = {};        // realIdx -> 'known' | 'unknown'
+let reviewMode = false; // when true, only show cards marked 'unknown'
 
 const card = document.getElementById('card');
 const chartFront = document.getElementById('chartFront');
 const counter = document.getElementById('counter');
 
-function currentList(){
+function categoryList(){
   return order.filter(i => activeCats.has(PATTERNS[i].cat));
+}
+function currentList(){
+  let list = categoryList();
+  if(reviewMode) list = list.filter(i => scores[i] === 'unknown');
+  return list;
+}
+
+function updateScoreBar(){
+  const catList = categoryList();
+  const known = catList.filter(i => scores[i] === 'known').length;
+  const missed = catList.filter(i => scores[i] === 'unknown').length;
+  const total = catList.length;
+
+  document.getElementById('knownCount').textContent = known;
+  document.getElementById('reviewCount').textContent = missed;
+  document.getElementById('remainingCount').textContent = (total - known - missed) + ' left';
+  document.getElementById('progressFill').style.width = total ? ((known + missed) / total * 100) + '%' : '0%';
+
+  const rb = document.getElementById('reviewMissedBtn');
+  rb.textContent = reviewMode ? 'Exit Review Mode' : `Review Missed (${missed})`;
+  rb.disabled = !reviewMode && missed === 0;
+  rb.classList.toggle('on', reviewMode);
 }
 
 function drawChart(container, candles, trendDir){
@@ -646,21 +835,24 @@ function render(){
   const list = currentList();
   const counterEl = document.getElementById('counter');
 
+  updateScoreBar();
+
   if(list.length === 0){
-    document.querySelector('.stage').innerHTML = '<div class="empty-msg">No categories selected.<br>Toggle at least one above.</div>';
+    const msg = reviewMode
+      ? '🎉 All caught up!<br>No cards left to review.'
+      : 'No categories selected.<br>Toggle at least one above.';
+    document.querySelector('.stage').innerHTML = `<div class="empty-msg">${msg}</div>`;
     counterEl.textContent = '0 / 0';
     return;
   }
-  if(!document.getElementById('card')){
-    location.reload(); // safety: rebuild stage if it was replaced by empty-msg
-    return;
-  }
+  ensureStage();
   if(idx >= list.length) idx = 0;
 
   const realIdx = list[idx];
   const p = PATTERNS[realIdx];
   const meta = CATS[p.cat];
   const posLabel = String(idx+1).padStart(2,'0');
+  const status = scores[realIdx];
 
   document.getElementById('frontIndex').textContent = posLabel;
   document.getElementById('backIndex').textContent = posLabel;
@@ -669,15 +861,19 @@ function render(){
   document.getElementById('backDesc').textContent = p.desc;
   document.getElementById('frontTrend').textContent = 'PRIOR TREND: ' + meta.trend.toUpperCase();
 
+  const badge = document.getElementById('frontBadge');
+  badge.textContent = status === 'known' ? '✓' : status === 'unknown' ? '✗' : '';
+  badge.style.color = status === 'known' ? 'var(--bull)' : status === 'unknown' ? 'var(--bear)' : 'var(--muted)';
+
   document.getElementById('frontTag').textContent = meta.short;
   document.getElementById('frontTag').className = 'tag ' + p.cat;
   document.getElementById('backTag').textContent = meta.short;
   document.getElementById('backTag').className = 'tag ' + p.cat;
 
-  drawChart(chartFront, p.candles, meta.trend);
+  drawChart(document.getElementById('chartFront'), p.candles, meta.trend);
   counter.textContent = `${idx+1} / ${list.length}`;
 
-  card.classList.remove('flipped');
+  document.getElementById('card').classList.remove('flipped');
   flipped = false;
 }
 
@@ -686,7 +882,7 @@ function ensureStage(){
     document.querySelector('.stage').innerHTML = `
       <div class="card" id="card">
         <div class="face front">
-          <div class="card-top"><span id="frontIndex">01</span><span class="tag" id="frontTag">BULL · REV</span></div>
+          <div class="card-top"><span id="frontIndex">01</span><span class="status-badge" id="frontBadge"></span><span class="tag" id="frontTag">BULL · REV</span></div>
           <div class="trend-label" id="frontTrend">PRIOR TREND: DOWN</div>
           <div class="chart" id="chartFront"></div>
           <div class="name" id="frontName">Hammer</div>
@@ -725,6 +921,12 @@ document.getElementById('nextBtn').addEventListener('click', () => {
   render();
 });
 
+function updateDeckCount(){
+  const n = PATTERNS.filter(p => activeCats.has(p.cat)).length;
+  document.getElementById('deckCount').textContent = `${n} card${n===1?'':'s'} selected`;
+  document.getElementById('startBtn').disabled = n === 0;
+}
+
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const c = btn.dataset.c;
@@ -735,29 +937,82 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
       activeCats.add(c);
       btn.classList.add('on');
     }
-    idx = 0;
-    ensureStage();
-    render();
+    updateDeckCount();
   });
 });
 
 document.getElementById('allBtn').addEventListener('click', () => {
   activeCats = new Set(['br','bc','er','ec']);
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.add('on'));
-  idx = 0;
-  ensureStage();
-  render();
+  updateDeckCount();
 });
 document.getElementById('noneBtn').addEventListener('click', () => {
   activeCats = new Set();
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
-  render();
+  updateDeckCount();
 });
 document.getElementById('shuffleBtn').addEventListener('click', () => {
   for(let i = order.length - 1; i > 0; i--){
     const j = Math.floor(Math.random() * (i+1));
     [order[i], order[j]] = [order[j], order[i]];
   }
+  idx = 0;
+  ensureStage();
+  render();
+});
+
+function showHome(){
+  document.getElementById('studyView').style.display = 'none';
+  document.getElementById('homeView').style.display = 'flex';
+}
+function showStudy(){
+  document.getElementById('homeView').style.display = 'none';
+  document.getElementById('studyView').style.display = 'flex';
+  idx = 0;
+  ensureStage();
+  render();
+}
+document.getElementById('startBtn').addEventListener('click', showStudy);
+document.getElementById('backBtn').addEventListener('click', showHome);
+
+updateDeckCount();
+
+function markCard(status){
+  const list = currentList();
+  if(list.length === 0) return;
+  if(idx >= list.length) idx = 0;
+  const realIdx = list[idx];
+  scores[realIdx] = status;
+
+  const newList = currentList();
+  if(newList.length === 0){
+    render();
+    return;
+  }
+  const pos = newList.indexOf(realIdx);
+  idx = pos === -1 ? Math.min(idx, newList.length - 1) : (pos + 1) % newList.length;
+  ensureStage();
+  render();
+}
+document.getElementById('markNo').addEventListener('click', () => markCard('unknown'));
+document.getElementById('markYes').addEventListener('click', () => markCard('known'));
+
+document.getElementById('reviewMissedBtn').addEventListener('click', () => {
+  if(reviewMode){
+    reviewMode = false;
+  } else {
+    const missed = categoryList().filter(i => scores[i] === 'unknown');
+    if(missed.length === 0) return;
+    reviewMode = true;
+  }
+  idx = 0;
+  ensureStage();
+  render();
+});
+
+document.getElementById('resetScoreBtn').addEventListener('click', () => {
+  scores = {};
+  reviewMode = false;
   idx = 0;
   ensureStage();
   render();
@@ -773,7 +1028,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-render();
+ensureStage();
 </script>
 </body>
 </html>
