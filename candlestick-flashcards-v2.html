@@ -101,6 +101,12 @@
     width:100%;
     max-width:380px;
     perspective:1400px;
+    overflow:visible;
+  }
+  .slide-wrap{
+    width:100%;
+    transform-style:preserve-3d;
+    will-change:transform;
   }
   .card{
     position:relative;
@@ -427,9 +433,7 @@
     <div class="controls">
       <div class="filter-row" id="filterRow">
         <button class="filter-btn on" data-c="br">Bullish Reversal</button>
-        <button class="filter-btn on" data-c="bc">Bullish Continuation</button>
         <button class="filter-btn on" data-c="er">Bearish Reversal</button>
-        <button class="filter-btn on" data-c="ec">Bearish Continuation</button>
       </div>
       <div class="action-row">
         <button class="action-btn" id="allBtn">Select All</button>
@@ -456,12 +460,12 @@
     </div>
 
     <div class="stage">
+      <div class="slide-wrap" id="slideWrap">
       <div class="card" id="card">
         <div class="face front">
           <div class="card-top">
             <span id="frontIndex">01</span>
             <span class="status-badge" id="frontBadge"></span>
-            <span class="tag" id="frontTag">BULL · REV</span>
           </div>
           <div class="trend-label" id="frontTrend">PRIOR TREND: DOWN</div>
           <div class="chart" id="chartFront"></div>
@@ -475,6 +479,7 @@
           <div class="name" id="backName">Hammer</div>
           <div class="desc" id="backDesc">...</div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -544,8 +549,8 @@ const haramiCrossBull = P("Harami Cross (Bullish)","br","Like a bullish harami, 
 const piercing = P("Piercing Line","br","A long red candle is followed by a green candle that opens below the prior low but closes above its midpoint, showing a strong intraday reversal in buyers' favor.",
   [{wT:15,wB:75,bT:20,bB:70,c:'bear'},{wT:35,wB:90,bT:40,bB:85,c:'bull'}]);
 
-const dojiStarBull = P("Doji Star (Bullish)","br","A long red candle is followed by a doji that gaps lower, showing selling momentum has stalled completely and the market is undecided at a lower level.",
-  [{wT:10,wB:70,bT:15,bB:65,c:'bear'},{wT:78,wB:92,bT:83,bB:86,c:'neutral'}]);
+const dojiStarBull = P("Doji Star (Bullish)","br","A long red candle is followed by a doji whose real body gaps below it, showing selling momentum has stalled completely — the shadows may still overlap; it's the bodies that need to gap.",
+  [{wT:10,wB:70,bT:15,bB:65,c:'bear'},{wT:55,wB:85,bT:72,bB:75,c:'neutral'}]);
 
 const meetingLinesBull = P("Meeting Lines (Bullish)","br","A long red candle is followed by a long green candle that closes at almost the same price, showing sellers and buyers 'meeting' at a level and momentum reversing.",
   [{wT:10,wB:65,bT:15,bB:60,c:'bear'},{wT:60,wB:95,bT:63,bB:92,c:'bull'}]);
@@ -560,10 +565,10 @@ const morningDojiStar = P("Morning Doji Star","br","A variant of the Morning Sta
   [{wT:10,wB:65,bT:15,bB:60,c:'bear'},{wT:65,wB:80,bT:71,bB:74,c:'neutral'},{wT:15,wB:70,bT:20,bB:65,c:'bull'}]);
 
 const abandonedBabyBull = P("Abandoned Baby (Bullish)","br","A rare, powerful reversal: a long red candle, then a doji that gaps away from it with a visible price gap on both sides, then a green candle gapping back up — the doji looks 'abandoned' in space.",
-  [{wT:10,wB:60,bT:15,bB:55,c:'bear'},{wT:75,wB:88,bT:80,bB:83,c:'neutral'},{wT:15,wB:65,bT:20,bB:60,c:'bull'}]);
+  [{wT:10,wB:60,bT:15,bB:55,c:'bear'},{wT:63,wB:76,bT:68,bB:71,c:'neutral'},{wT:15,wB:60,bT:20,bB:55,c:'bull'}]);
 
-const triStarBull = P("Tri-Star (Bullish)","br","Three consecutive doji candles, with the middle one gapping below the other two, marking an extreme and rare moment of indecision at the bottom of a decline.",
-  [{wT:40,wB:55,bT:46,bB:49,c:'neutral'},{wT:70,wB:85,bT:76,bB:79,c:'neutral'},{wT:35,wB:50,bT:41,bB:44,c:'neutral'}]);
+const triStarBull = P("Tri-Star (Bullish)","br","Three consecutive doji candles, with the middle one's real body gapping below the other two — an extreme, rare moment of indecision at the bottom of a decline. As with any star pattern, it's the bodies that gap; the shadows commonly overlap.",
+  [{wT:35,wB:70,bT:46,bB:49,c:'neutral'},{wT:40,wB:75,bT:54,bB:57,c:'neutral'},{wT:35,wB:70,bT:46,bB:49,c:'neutral'}]);
 
 const breakawayBull = P("Breakaway (Bullish)","br","A five-candle pattern: a long red candle, three smaller candles continuing lower in steps, then a long green candle that closes back inside the first candle's body — a slow reversal.",
   [{wT:10,wB:40,bT:15,bB:35,c:'bear'},{wT:38,wB:60,bT:42,bB:57,c:'bear'},{wT:55,wB:75,bT:58,bB:72,c:'bear'},{wT:68,wB:88,bT:70,bB:85,c:'bear'},{wT:20,wB:90,bT:25,bB:85,c:'bull'}]);
@@ -575,7 +580,7 @@ const threeOutsideUp = P("Three Outside Up","br","A Bullish Engulfing pattern fo
   [{wT:30,wB:60,bT:35,bB:55,c:'bear'},{wT:15,wB:80,bT:20,bB:75,c:'bull'},{wT:8,wB:72,bT:10,bB:68,c:'bull'}]);
 
 const kickingBull = P("Kicking (Bullish)","br","A bearish marubozu is immediately followed by a bullish marubozu that gaps up with no overlap in price range at all — an abrupt, forceful reversal in sentiment.",
-  [{wT:40,wB:42,bT:42,bB:90,c:'bear'},{wT:8,wB:10,bT:10,bB:38,c:'bull'}]);
+  [{wT:40,wB:42,bT:42,bB:90,c:'bear'},{wT:5,wB:8,bT:8,bB:37,c:'bull'}]);
 
 const uniqueThreeRivers = P("Unique Three Rivers Bottom","br","A long red candle, then a smaller red candle with a lower low forming a hammer-like shape inside the first's range, then a small green candle — a gradual bottoming process.",
   [{wT:10,wB:70,bT:15,bB:65,c:'bear'},{wT:60,wB:95,bT:60,bB:80,c:'bear'},{wT:55,wB:78,bT:60,bB:74,c:'bull'}]);
@@ -617,8 +622,8 @@ const upsideTasukiGap = P("Upside Tasuki Gap","bc","A green candle, then a secon
 const sideBySideWhiteBull = P("Side by Side White Lines (Bullish)","bc","Two green candles of similar size that gap up together in roughly the same direction, showing buyers stepping in twice in a row to keep the uptrend moving.",
   [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:15,wB:45,bT:18,bB:42,c:'bull'}]);
 
-const threeLineStrikeBull = P("Three-Line Strike (Bullish)","bc","Three rising green candles followed by one long red candle that engulfs all three — an unusual pullback that, in this pattern, is typically followed by the uptrend resuming.",
-  [{wT:60,wB:80,bT:63,bB:77,c:'bull'},{wT:45,wB:65,bT:48,bB:62,c:'bull'},{wT:30,wB:50,bT:33,bB:47,c:'bull'},{wT:75,wB:95,bT:78,bB:92,c:'bear'}]);
+const threeLineStrikeBull = P("Three-Line Strike (Bullish)","bc","Three rising green candles, each closing higher than the last, are followed by one long red candle that opens above the third candle's close and closes below the first candle's open — engulfing the entire advance in a single session. Despite the sharp look, the uptrend typically resumes afterward.",
+  [{wT:66,wB:90,bT:70,bB:88,c:'bull'},{wT:46,wB:70,bT:50,bB:68,c:'bull'},{wT:26,wB:50,bT:30,bB:48,c:'bull'},{wT:22,wB:95,bT:26,bB:93,c:'bear'}]);
 
 const upsideGapThreeMethods = P("Upside Gap Three Methods","bc","Two green candles separated by a gap, followed by a red candle that trades into the gap but doesn't close it — the underlying uptrend remains in control.",
   [{wT:60,wB:80,bT:63,bB:77,c:'bull'},{wT:30,wB:50,bT:33,bB:47,c:'bull'},{wT:45,wB:70,bT:48,bB:67,c:'bear'}]);
@@ -683,7 +688,7 @@ const ladderTop = M(ladderBottom,"er","Ladder Top","Three rising green candles i
 const matchingHigh = M(matchingLow,"er","Matching High","Two green candles that close at almost exactly the same high price, suggesting a ceiling of resistance is forming as buyers fail to push price any higher.");
 
 const upsideGapTwoCrows = P("Upside Gap Two Crows","er","A long green candle, then a red candle gapping up above it, then another red candle that closes back within the first candle's body — the gap gets 'covered' by the two crows.",
-  [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:15,wB:30,bT:17,bB:28,c:'bear'},{wT:20,wB:50,bT:23,bB:47,c:'bear'}]);
+  [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:22,wB:37,bT:24,bB:35,c:'bear'},{wT:20,wB:50,bT:23,bB:47,c:'bear'}]);
 
 const deliberation = P("Deliberation","er","Two rising green candles followed by a third green candle with a noticeably small body, showing buyers hesitating right near the top of a rally.",
   [{wT:50,wB:75,bT:53,bB:72,c:'bull'},{wT:30,wB:53,bT:33,bB:50,c:'bull'},{wT:20,wB:32,bT:22,bB:29,c:'bull'}]);
@@ -692,7 +697,7 @@ const advanceBlock = P("Advance Block","er","Three rising green candles, each wi
   [{wT:55,wB:78,bT:58,bB:75,c:'bull'},{wT:32,wB:58,bT:36,bB:55,c:'bull'},{wT:15,wB:40,bT:22,bB:38,c:'bull'}]);
 
 const twoCrows = P("Two Crows","er","A long green candle, then a red candle gapping up, then a second red candle closing within the first candle's body — two sessions of selling erase the gap-up.",
-  [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:15,wB:35,bT:17,bB:33,c:'bear'},{wT:20,wB:52,bT:23,bB:48,c:'bear'}]);
+  [{wT:40,wB:70,bT:43,bB:67,c:'bull'},{wT:17,wB:37,bT:19,bB:35,c:'bear'},{wT:20,wB:52,bT:23,bB:48,c:'bear'}]);
 
 const gravestoneDoji = P("Gravestone Doji","er","Open and close are essentially equal, forming a flat body near the bottom with a long upper wick and little to no lower wick — buyers pushed price up intraday but lost all of the ground by the close.",
   [{wT:10,wB:83,bT:80,bB:83,c:'neutral'}]);
@@ -709,7 +714,7 @@ const downsideTasukiGap = M(upsideTasukiGap,"ec","Downside Tasuki Gap","A red ca
 const sideBySideWhiteBear = P("Side by Side White Lines (Bearish)","ec","An unusual case where two green candles of similar size gap down together within a broader downtrend — a rare pause pattern that still tends to resolve lower.",
   [{wT:30,wB:60,bT:33,bB:57,c:'bull'},{wT:55,wB:85,bT:58,bB:82,c:'bull'}]);
 
-const threeLineStrikeBear = M(threeLineStrikeBull,"ec","Three-Line Strike (Bearish)","Three falling red candles followed by one long green candle that engulfs all three — an unusual rally that, in this pattern, is typically followed by the downtrend resuming.");
+const threeLineStrikeBear = M(threeLineStrikeBull,"ec","Three-Line Strike (Bearish)","Three falling red candles, each closing lower than the last, are followed by one long green candle that opens below the third candle's close and closes above the first candle's open — engulfing the entire decline in a single session. Despite the sharp look, the downtrend typically resumes afterward.");
 
 const downsideGapThreeMethods = M(upsideGapThreeMethods,"ec","Downside Gap Three Methods","Two red candles separated by a gap, followed by a green candle that trades into the gap but doesn't close it — the underlying downtrend remains in control.");
 
@@ -724,22 +729,14 @@ const inNecklineBull = M(inNecklineBase,"bc","In Neckline (context-dependent)","
 
 /* ================= full deck ================= */
 const PATTERNS = [
-  // Bullish Reversal (25)
-  longWhiteBody, hammer, invHammer, beltHoldBull, engulfBull, haramiBull, haramiCrossBull, piercing,
-  dojiStarBull, meetingLinesBull, threeWhiteSoldiers, morningStar, morningDojiStar, abandonedBabyBull,
-  triStarBull, breakawayBull, threeInsideUp, threeOutsideUp, kickingBull,
-  stickSandwich, homingPigeon, ladderBottom, matchingLow,
+  // Bullish Reversal (15)
+  longWhiteBody, hammer, invHammer, beltHoldBull, engulfBull, haramiBull, haramiCrossBull,
+  piercing, threeWhiteSoldiers, morningStar, threeInsideUp, threeOutsideUp, dojiStarBull,
   dragonflyDoji, marubozuBull,
-  // Bullish Continuation (5)
-  separatingLinesBull, risingThreeMethods, upsideTasukiGap, threeLineStrikeBull, risingWindow,
-  // Bearish Reversal (27)
+  // Bearish Reversal (15)
   longBlackBody, hangingMan, shootingStar, beltHoldBear, engulfBear, haramiBear, haramiCrossBear,
-  darkCloudCover, dojiStarBear, meetingLinesBear, threeBlackCrows, eveningStar, eveningDojiStar,
-  abandonedBabyBear, triStarBear, breakawayBear, threeInsideDown, threeOutsideDown, kickingBear,
-  ladderTop, matchingHigh, upsideGapTwoCrows, deliberation, advanceBlock, twoCrows, gravestoneDoji,
-  marubozuBear,
-  // Bearish Continuation (5)
-  separatingLinesBear, fallingThreeMethods, downsideTasukiGap, threeLineStrikeBear, fallingWindow,
+  darkCloudCover, threeBlackCrows, eveningStar, threeInsideDown, threeOutsideDown, dojiStarBear,
+  gravestoneDoji, marubozuBear,
 ];
 
 /* ---------- state ---------- */
@@ -876,24 +873,27 @@ function render(){
   badge.textContent = status === 'known' ? '✓' : status === 'unknown' ? '✗' : '';
   badge.style.color = status === 'known' ? 'var(--bull)' : status === 'unknown' ? 'var(--bear)' : 'var(--muted)';
 
-  document.getElementById('frontTag').textContent = meta.short;
-  document.getElementById('frontTag').className = 'tag ' + p.cat;
   document.getElementById('backTag').textContent = meta.short;
   document.getElementById('backTag').className = 'tag ' + p.cat;
 
   drawChart(document.getElementById('chartFront'), p.candles, meta.trend);
   counter.textContent = `${idx+1} / ${list.length}`;
 
-  document.getElementById('card').classList.remove('flipped');
+  const cardEl = document.getElementById('card');
+  cardEl.style.transition = 'none';
+  cardEl.classList.remove('flipped');
+  void cardEl.offsetWidth; // force reflow so the transition-none takes effect immediately
+  cardEl.style.transition = '';
   flipped = false;
 }
 
 function ensureStage(){
   if(!document.getElementById('card')){
     document.querySelector('.stage').innerHTML = `
+      <div class="slide-wrap" id="slideWrap">
       <div class="card" id="card">
         <div class="face front">
-          <div class="card-top"><span id="frontIndex">01</span><span class="status-badge" id="frontBadge"></span><span class="tag" id="frontTag">BULL · REV</span></div>
+          <div class="card-top"><span id="frontIndex">01</span><span class="status-badge" id="frontBadge"></span></div>
           <div class="trend-label" id="frontTrend">PRIOR TREND: DOWN</div>
           <div class="chart" id="chartFront"></div>
           <div class="hint">tap to reveal &middot; swipe for next</div>
@@ -903,6 +903,7 @@ function ensureStage(){
           <div class="name" id="backName">Hammer</div>
           <div class="desc" id="backDesc">...</div>
         </div>
+      </div>
       </div>`;
     attachCardListener();
   }
@@ -940,19 +941,46 @@ function attachCardListener(){
 }
 attachCardListener();
 
+function animateSlide(direction, updateFn){
+  const wrap = document.getElementById('slideWrap');
+  if(!wrap){ updateFn(); return; }
+  const outX = direction === 'next' ? '-28%' : '28%';
+  const inX = direction === 'next' ? '28%' : '-28%';
+
+  wrap.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+  wrap.style.transform = `translateX(${outX})`;
+  wrap.style.opacity = '0';
+
+  setTimeout(() => {
+    updateFn();
+    wrap.style.transition = 'none';
+    wrap.style.transform = `translateX(${inX})`;
+    void wrap.offsetWidth; // force reflow
+    requestAnimationFrame(() => {
+      wrap.style.transition = 'transform 0.22s ease, opacity 0.22s ease';
+      wrap.style.transform = 'translateX(0)';
+      wrap.style.opacity = '1';
+    });
+  }, 200);
+}
+
 document.getElementById('prevBtn').addEventListener('click', () => {
   ensureStage();
   const list = currentList();
   if(list.length === 0) return;
-  idx = (idx - 1 + list.length) % list.length;
-  render();
+  animateSlide('prev', () => {
+    idx = (idx - 1 + list.length) % list.length;
+    render();
+  });
 });
 document.getElementById('nextBtn').addEventListener('click', () => {
   ensureStage();
   const list = currentList();
   if(list.length === 0) return;
-  idx = (idx + 1) % list.length;
-  render();
+  animateSlide('next', () => {
+    idx = (idx + 1) % list.length;
+    render();
+  });
 });
 
 function updateDeckCount(){
@@ -1024,9 +1052,11 @@ function markCard(status){
     return;
   }
   const pos = newList.indexOf(realIdx);
-  idx = pos === -1 ? Math.min(idx, newList.length - 1) : (pos + 1) % newList.length;
-  ensureStage();
-  render();
+  animateSlide('next', () => {
+    idx = pos === -1 ? Math.min(idx, newList.length - 1) : (pos + 1) % newList.length;
+    ensureStage();
+    render();
+  });
 }
 document.getElementById('markNo').addEventListener('click', () => markCard('unknown'));
 document.getElementById('markYes').addEventListener('click', () => markCard('known'));
