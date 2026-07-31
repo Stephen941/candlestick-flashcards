@@ -172,37 +172,6 @@
       #131a21;
     overflow:hidden;
   }
-  .lead-zone{
-    position:absolute;
-    left:0; top:0; bottom:0;
-    width:28%;
-    border-right:1px dashed #2c3946;
-  }
-  .lead-candle{
-    position:absolute;
-    bottom:0;
-    height:100%;
-  }
-  .lead-candle .wick{
-    position:absolute;
-    left:50%;
-    width:2px;
-    transform:translateX(-50%);
-    opacity:0.3;
-  }
-  .lead-candle .body{
-    position:absolute;
-    left:50%;
-    width:62%;
-    transform:translateX(-50%);
-    border-radius:2px;
-    opacity:0.35;
-  }
-  .pattern-zone{
-    position:absolute;
-    left:30%;
-    right:0; top:0; bottom:0;
-  }
   .candle{
     position:absolute;
     bottom:0;
@@ -227,6 +196,8 @@
   .body.bull{background:var(--bull);}
   .body.bear{background:var(--bear);}
   .body.neutral{background:var(--neutral);}
+  .candle.lead-candle .wick{opacity:0.32;}
+  .candle.lead-candle .body{opacity:0.4;}
 
   .name{
     font-family:'Space Grotesk',sans-serif;
@@ -777,67 +748,85 @@ function updateScoreBar(){
   rb.classList.toggle('on', reviewMode);
 }
 
+function buildLeadCandles(trendDir, firstPatternCandle){
+  // anchor point: the price level the trend should flow directly into —
+  // the opening price of the pattern's first candle
+  let endLevel;
+  if(firstPatternCandle.c === 'bull'){
+    endLevel = firstPatternCandle.bB;       // bull candle opens at the bottom of its body
+  } else if(firstPatternCandle.c === 'bear'){
+    endLevel = firstPatternCandle.bT;       // bear candle opens at the top of its body
+  } else {
+    endLevel = (firstPatternCandle.bT + firstPatternCandle.bB) / 2; // doji: use body center
+  }
+
+  const minBound = 4, maxBound = 96;
+  const wickPad = 3;
+  const mk = (open, close, color) => {
+    const top = Math.min(open, close), bottom = Math.max(open, close);
+    return { wT: Math.max(0, top - wickPad), wB: Math.min(100, bottom + wickPad), bT: top, bB: bottom, c: color };
+  };
+
+  if(trendDir === 'up'){
+    // ascending staircase of green candles: earlier candles sit further below
+    // endLevel (bigger % = lower price); step shrinks automatically if endLevel
+    // is already low on the chart, so nothing ever collapses against the edge
+    const available = Math.max(6, maxBound - endLevel);
+    const step = Math.min(14, available / 3);
+    const c2close = endLevel, c1close = endLevel + step, c0close = endLevel + 2*step;
+    const c0open = endLevel + 3*step;
+    return [
+      mk(c0open, c0close, 'bull'),
+      mk(c0close, c1close, 'bull'),
+      mk(c1close, c2close, 'bull'),
+    ];
+  }
+  // descending staircase of red candles: earlier candles sit further above
+  // endLevel; step shrinks the same way if endLevel is already high on the chart
+  const available = Math.max(6, endLevel - minBound);
+  const step = Math.min(14, available / 3);
+  const c2close = endLevel, c1close = endLevel - step, c0close = endLevel - 2*step;
+  const c0open = endLevel - 3*step;
+  return [
+    mk(c0open, c0close, 'bear'),
+    mk(c0close, c1close, 'bear'),
+    mk(c1close, c2close, 'bear'),
+  ];
+}
+
 function drawChart(container, candles, trendDir){
   container.innerHTML = '';
 
-  // lead-in: 3 faded candlesticks showing the prior trend
-  const lead = document.createElement('div');
-  lead.className = 'lead-zone';
-  const leadShapes = trendDir === 'up'
-    ? [{wT:70,wB:96,bT:76,bB:93,c:'bull'},{wT:45,wB:76,bT:50,bB:73,c:'bull'},{wT:14,wB:52,bT:20,bB:48,c:'bull'}]
-    : [{wT:14,wB:52,bT:20,bB:48,c:'bear'},{wT:45,wB:76,bT:50,bB:73,c:'bear'},{wT:70,wB:96,bT:76,bB:93,c:'bear'}];
-  const ln = leadShapes.length;
-  leadShapes.forEach((cd, i) => {
+  const leadShapes = buildLeadCandles(trendDir, candles[0]);
+
+  const combined = leadShapes.map(c => ({...c, lead:true}))
+    .concat(candles.map(c => ({...c, lead:false})));
+  const total = combined.length;
+  const slotWidth = 70 / total; // same width-to-count ratio every candle shares, lead or pattern
+
+  combined.forEach((cd, i) => {
     const slot = document.createElement('div');
-    slot.className = 'lead-candle';
-    const leftPct = ((i+0.5)/ln)*100;
-    slot.style.left = `calc(${leftPct}% - 6%)`;
-    slot.style.width = (60/ln) + '%';
+    slot.className = 'candle' + (cd.lead ? ' lead-candle' : '');
+    const leftPct = ((i + 0.5) / total) * 100;
+    slot.style.left = `calc(${leftPct}% - ${slotWidth/2}%)`;
+    slot.style.width = slotWidth + '%';
 
     const wick = document.createElement('div');
     wick.className = 'wick';
     wick.style.top = cd.wT + '%';
     wick.style.height = (cd.wB - cd.wT) + '%';
-    wick.style.background = cd.c === 'bull' ? 'var(--bull)' : 'var(--bear)';
+    if(cd.lead) wick.style.background = cd.c === 'bull' ? 'var(--bull)' : 'var(--bear)';
 
     const body = document.createElement('div');
-    body.className = 'body';
+    body.className = 'body' + (cd.lead ? '' : ' ' + cd.c);
     body.style.top = cd.bT + '%';
     body.style.height = Math.max(cd.bB - cd.bT, 2) + '%';
-    body.style.background = cd.c === 'bull' ? 'var(--bull)' : 'var(--bear)';
+    if(cd.lead) body.style.background = cd.c === 'bull' ? 'var(--bull)' : 'var(--bear)';
 
     slot.appendChild(wick);
     slot.appendChild(body);
-    lead.appendChild(slot);
+    container.appendChild(slot);
   });
-  container.appendChild(lead);
-
-  // pattern candles
-  const zone = document.createElement('div');
-  zone.className = 'pattern-zone';
-  const n = candles.length;
-  candles.forEach((cd, i) => {
-    const slot = document.createElement('div');
-    slot.className = 'candle';
-    const leftPct = ((i+0.5)/n)*100;
-    slot.style.left = `calc(${leftPct}% - 7%)`;
-    slot.style.width = (70/n) + '%';
-
-    const wick = document.createElement('div');
-    wick.className = 'wick';
-    wick.style.top = cd.wT + '%';
-    wick.style.height = (cd.wB - cd.wT) + '%';
-
-    const body = document.createElement('div');
-    body.className = 'body ' + cd.c;
-    body.style.top = cd.bT + '%';
-    body.style.height = Math.max(cd.bB - cd.bT, 2) + '%';
-
-    slot.appendChild(wick);
-    slot.appendChild(body);
-    zone.appendChild(slot);
-  });
-  container.appendChild(zone);
 }
 
 function render(){
